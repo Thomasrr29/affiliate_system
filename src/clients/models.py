@@ -1,8 +1,9 @@
 from typing import Optional, TYPE_CHECKING
+from src.common.datetime_function import get_utc_now_function
 from pydantic import ConfigDict
 from sqlmodel import Field, SQLModel, Relationship
 from sqlalchemy import Column, DateTime
-from datetime import datetime, timezone
+from datetime import datetime
 from .enums import ClientType
 
 if TYPE_CHECKING: 
@@ -18,9 +19,9 @@ class ClientBase(SQLModel):
     client_type: ClientType
     affiliate_code: Optional[str] = Field(default=None, nullable=True)
     updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False),
-        default_factory= lambda: datetime.now(timezone=timezone.utc))
+        default_factory=get_utc_now_function)
     created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False),
-        default_factory= lambda: datetime.now(timezone=timezone.utc))
+        default_factory=get_utc_now_function)
 
 class Client(ClientBase, table=True): 
 

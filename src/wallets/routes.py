@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Query, Body, Depends
-from src.types.response_type import ResponseType
 from src.core.db import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.wallets.models import Wallet
@@ -33,7 +32,7 @@ async def create_wallet_with_balances(client_id: int, db: AsyncSession = Depends
 
 @router.delete('/wallet/{wallet_id}',
     tags=['Wallets'],
-    summary='Delete wallet')
+    summary='Deletes wallet')
 async def delete_wallet(wallet_id: int, db: AsyncSession = Depends(get_db)): 
 
     return await WalletsService.DeleteWallet(db, wallet_id)

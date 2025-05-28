@@ -1,6 +1,7 @@
 from typing import Optional, TYPE_CHECKING
 from sqlalchemy import Column, DateTime
-from datetime import datetime, timezone
+from src.common.datetime_function import get_utc_now_function
+from datetime import datetime
 from ..enums import AssetType
 from sqlmodel import Field, SQLModel, UniqueConstraint, Relationship
 
@@ -12,10 +13,11 @@ class AssetBalanceBase(SQLModel):
     wallet_id: int = Field(foreign_key='wallet.id', index=True)
     asset_type: AssetType = Field(default=AssetType.POINTS)
     balance: float = Field(default = 0)
-    updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False),
-        default_factory= lambda: datetime.now(timezone=timezone.utc))
+    updated_at: datetime = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+        default_factory=get_utc_now_function)
     created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False),
-        default_factory= lambda: datetime.now(timezone=timezone.utc))
+        default_factory=get_utc_now_function)
     
     __table_args__ = (
         UniqueConstraint('wallet_id', 'asset_type', name='uix_wallet_asset'),

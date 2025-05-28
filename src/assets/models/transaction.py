@@ -1,8 +1,9 @@
 from sqlmodel import SQLModel, Field
-from ..enums import AssetType, AssetTransactionCategory
+from src.assets.enums import AssetType, AssetTransactionCategory
+from src.common.datetime_function import get_utc_now_function
 from sqlalchemy import Column, DateTime
 from typing import Optional 
-from datetime import datetime 
+from datetime import datetime, timezone
 
 class AssetTransactionBase(SQLModel):
 
@@ -12,9 +13,13 @@ class AssetTransactionBase(SQLModel):
     asset_type: AssetType
     category: AssetTransactionCategory
     reference_id: Optional[int] = Field(default=None)
-    updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-
+    updated_at: datetime = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+        default_factory=get_utc_now_function)
+    created_at: datetime = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+        default_factory=get_utc_now_function)
+    
 class AssetTransaction(AssetTransactionBase, table=True): 
 
     __tablename__ = 'asset_transaction'

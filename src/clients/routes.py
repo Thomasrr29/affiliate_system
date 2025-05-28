@@ -1,16 +1,16 @@
 from fastapi import APIRouter, Query, Body, Depends
-from src.types.response_type import ResponseType
-from src.core.db import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
-from .models import ClientCreate, ClientUpdate, Client
-from .enums import ClientType
+from .models import ClientCreate, ClientUpdate
+from src.types.response_type import ClientsPaginationResponse
 from .services import ClientService
+from src.core.db import get_db
+from .enums import ClientType
+
 
 router = APIRouter()
 
-@router.get('/clients/',
-    response_model=None,
+@router.get('/clients',
+    response_model=ClientsPaginationResponse,
     tags=['Clients'],
     summary='Get all clients')
 async def getAllClients(db: AsyncSession = Depends(get_db), limit: int = Query(10, ge=1), offset: int = Query(0, ge=0)):

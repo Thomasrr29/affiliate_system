@@ -51,6 +51,14 @@ class AssetsService():
         
         return db_assets_transaction
 
+    async def get_asset_transactions_by_reference_id(db: AsyncSession, reference_id: int):
+        result = await db.execute(select(AssetTransaction).where(AssetTransaction.reference_id == reference_id))
+        db_asset_transactions = result.scalars().all()
+
+        if not db_asset_transactions: 
+            raise HTTPException(status_code=404, detail="Asset transactions not found")
+        
+        return db_asset_transactions
 
     #BALANCES 
     async def get_asset_balance_by_wallet_id_and_asset_type(db: AsyncSession, wallet_id: int, asset_type: str): 
@@ -59,6 +67,15 @@ class AssetsService():
             (AssetBalance.wallet_id == wallet_id) & 
             (AssetBalance.asset_type == asset_type)))
         db_asset_balance = result.scalar_one_or_none()
+
+        if not db_asset_balance: 
+            raise HTTPException(status_code=404, detail="Asset balance not found")
+        
+        return db_asset_balance
+
+    async def get_asset_balance_by_wallet_id(db: AsyncSession, wallet_id: int):
+        result = await db.execute(select(AssetBalance).where(AssetBalance.wallet_id == wallet_id))
+        db_asset_balance = result.scalars().all()
 
         if not db_asset_balance: 
             raise HTTPException(status_code=404, detail="Asset balance not found")

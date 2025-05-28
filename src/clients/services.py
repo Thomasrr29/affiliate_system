@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.wallets.services import WalletsService
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import selectinload
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from .enums import ClientType
 from sqlmodel import select
 import time
@@ -16,6 +16,12 @@ import time
 
 class ClientService(): 
 
+
+    async def GetClientsWithoutPagination(db: AsyncSession): 
+
+        result = await db.get(Client)
+        return result 
+
     async def GetClients(db:AsyncSession, limit: int = 10, offset: int = 0):
 
         result = await db.execute(
@@ -27,7 +33,12 @@ class ClientService():
         if not db_clients:
             raise HTTPException(status_code=404, detail="Clients not found")
 
-        return db_clients 
+        return { 
+
+            "limit": limit, 
+            "offset": offset,
+            "data": db_clients
+        }
         
     async def GetAffiliateClients(db:AsyncSession): 
         
@@ -117,28 +128,32 @@ class ClientService():
 
         async with db.begin():
 
-            result = await db.execute(select(Client).where(Client.email == createClientData.email))
-            client_existence = result.scalar_one_or_none()
+            try: 
+                result = await db.execute(select(Client).where(Client.email == createClientData.email))
+                client_existence = result.scalar_one_or_none()
 
-            if client_existence: 
-                raise HTTPException(status_code=401, detail=f'The client with the email {createClientData.email} already exists')
+                if client_existence: 
+                    raise HTTPException(status_code=401, detail=f'The client with the email {createClientData.email} already exists')
 
-            # Generate affiliate code if the client type is affiliate
-            if createClientData.client_type == ClientType.AFFILIATE:
-                createClientData.affiliate_code = ClientService.GenerateAffiliateCode(createClientData.name)
+                # Generate affiliate code if the client type is affiliate
+                if createClientData.client_type == ClientType.AFFILIATE:
+                    createClientData.affiliate_code = ClientService.GenerateAffiliateCode(createClientData.name)
 
-            # Create the client
-            created_client = await ClientService.CreateClient(db, createClientData)
+                # Create the client
+                created_client = await ClientService.CreateClient(db, createClientData)
 
-            wallet_create = await WalletsService.CreateWalletWithBalances(db, created_client['id'])
+                wallet_create = await WalletsService.CreateWalletWithBalances(db, created_client['id'])
 
-            return {
-                "data": {
-                    "client": created_client,
-                    "wallet": wallet_create
+                return {
+                    "data": {
+                        "client": created_client,
+                        "wallet": wallet_create
+                    }
                 }
-            }
-
+                
+            except: 
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"There was a problem creating the client")
+            
     async def UpdateClient(db: AsyncSession, client_id: int, updateClientData: ClientUpdate): 
        
         client_db = await db.get(Client, client_id)

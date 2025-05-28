@@ -117,6 +117,8 @@ class BonusService:
                 "amount": asset_for_add,
                 "category": "IN",
                 "description": description,
+                ##IN THE SALE CASE HAVE THE FUNCTION OF SAVE THE SALE ID 
+                "reference_id": data.get("sale_id", None),
                 "created_at": now,
                 "updated_at": now
             }

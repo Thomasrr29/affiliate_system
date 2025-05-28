@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Query, Body, Depends
-from src.types.response_type import ResponseType
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.db import get_db
-from .models import SalesCreate, SalesUpdate, SalesWithBonusData
+from src.types import SalesPaginationResponse
+from .models import SalesUpdate, SalesWithBonusData
 from .services import SalesService
 
 router = APIRouter()
 
 @router.get('/sales',
+    response_model=SalesPaginationResponse,
     tags=['Sales'],
     summary='Get all sales')
 async def get_all_sales(
@@ -41,14 +42,14 @@ async def create_sale(create_sale_data: SalesWithBonusData = Body(), db: AsyncSe
 
 @router.patch('/sales/update/{sale_id}',
     tags=['Sales'],
-    summary='Update sale')
+    summary='Updates sale')
 async def update_sale(sale_id: int, update_sale_data: SalesUpdate = Body(), db: AsyncSession = Depends(get_db)):
 
     return await SalesService.UpdateSale(db, sale_id, update_sale_data)
 
 @router.delete('/sales/delete/{sale_id}',
     tags=['Sales'],
-    summary='Delete sale')
+    summary='Deletes sale')
 async def delete_sale(sale_id: int, db: AsyncSession = Depends(get_db)): 
 
     return await SalesService.DeleteSale(db, sale_id)

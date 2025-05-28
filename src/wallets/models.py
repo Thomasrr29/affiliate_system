@@ -3,6 +3,7 @@ from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy import Column, DateTime
 from datetime import datetime, timezone
 from pydantic import ConfigDict
+from src.common.datetime_function import get_utc_now_function
 
 if TYPE_CHECKING:
     from src.assets.models.balance import AssetBalance
@@ -12,9 +13,9 @@ class WalletBase(SQLModel):
 
     client_id: int = Field(foreign_key='client.id', unique=True) 
     updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False),
-        default_factory= lambda: datetime.now(timezone=timezone.utc))
+        default_factory=get_utc_now_function)
     created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False),
-        default_factory= lambda: datetime.now(timezone=timezone.utc))
+        default_factory=get_utc_now_function)
 
 class AssetBalanceForWallet(SQLModel): 
 

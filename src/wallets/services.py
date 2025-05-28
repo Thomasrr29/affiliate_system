@@ -4,6 +4,7 @@ from src.clients.models import Client
 from src.clients.enums import ClientType
 from sqlalchemy.orm import selectinload
 from fastapi.encoders import jsonable_encoder
+from src.types import PaginationResponse
 from src.wallets import Wallet
 from fastapi import HTTPException
 from typing import TYPE_CHECKING
@@ -26,7 +27,7 @@ WALLET_BALANCES_FOR_CLIENT = {
 
 class WalletsService():
 
-    async def GetAllWallets(db: AsyncSession, limit: int = 10, offset: int = 0): 
+    async def GetAllWallets(db: AsyncSession, limit: int = 10, offset: int = 0) -> PaginationResponse: 
         
         result = await db.execute(
             select(Wallet)
@@ -38,8 +39,12 @@ class WalletsService():
         if not db_wallets:
             raise HTTPException(status_code=404, detail="Wallets not found")
         
-        return jsonable_encoder(db_wallets)
-
+        return {
+            "offset": offset,
+            "limit": limit, 
+            "data": jsonable_encoder(db_wallets)
+        }
+    
     async def GetWalletByClientId(db: AsyncSession, client_id: int): 
 
         result = await db.execute(

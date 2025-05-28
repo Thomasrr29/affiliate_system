@@ -1,19 +1,42 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from .models import SalesCreate, SalesUpdate, Sales, SalesWithBonusData
 from src.assets.bonus_services import BonusService
 from src.wallets import WalletsService
 from sqlmodel import select
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 class SalesService(): 
 
-    async def get_all_sales(db: AsyncSession, limit: int = 10, offset: int = 1): 
+    async def get_all_sales(db: AsyncSession, limit: int = 10, offset: int = 0): 
         
-        result = await db.execute(select(Sales).limit(limit).offset(offset))
-        db_sales = result.scalars().all()
+        try: 
 
-        return db_sales
+            result = await db.execute(
+            select(Sales)
+            .limit(limit)
+            .offset(offset)
+            .options(
+                selectinload(Sales.buyer_client), 
+                selectinload(Sales.refering_affiliate)
+            ))
+            db_sales = result.scalars().all()
 
+            for sale in db_sales: 
+                print(f"Sale id: {sale.id}")
+                print(f"client buyer{sale.buyer_client}")
+                print(f"Refering client {sale.refering_affiliate}")
+
+            return {
+                "limit": limit,
+                "offset": offset, 
+                "data": db_sales,
+            }
+            
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Exception getting the sales {e}") 
+        
     async def GetSiigoLastSales(db: AsyncSession): 
         print("Get siigo sales created after the last date registered")
 
@@ -38,10 +61,10 @@ class SalesService():
             print("❌ ERROR AL CREAR SALE:", str(e))
             raise
 
-
     async def CreateSaleFromSiigo(db: AsyncSession, createSaleData: SalesCreate): 
         pass 
 
+    ###CREATE SERVICE THAT APPLY BONUS 
     async def CreateSaleAndApplyBonusWallet(db:AsyncSession, createSaleData: SalesWithBonusData): 
         
         async with db.begin(): 
@@ -60,6 +83,8 @@ class SalesService():
                     "amount": createSaleData.data["amount"],
                     "sale_id": sale_created.id
                 }
+
+                print("Data 1:", data)
 
                 #We apply the bonus to the wallet
                 update_wallet_with_bonus = await BonusService.apply_bonus(
@@ -87,6 +112,8 @@ class SalesService():
                         bonus_type="AFFILIATE",
                         data=data
                     )
+                
+                print("Data 2:", data)
 
                 return {
                     "CLIENT": update_wallet_with_bonus,
